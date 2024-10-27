@@ -38,12 +38,31 @@ def extract_amount_from_invoice(pdf_path):
                 # 假设发票中只有一个金额，返回最后一个找到的金额
                 return amounts[-1]
     return None
+    
+def collect_invoice_class(pdf_files, keywords):
+    keyword_counts = {keyword: 0 for keyword in keywords}
+    
+    for pdf_file in pdf_files:
+        with pdfplumber.open(pdf_file) as pdf:
+            text = pdf.pages[0].extract_text()
+            flag = False
+            for keyword in keywords:
+                if keyword in text:
+                    keyword_counts[keyword] += 1
+                    flag = True
+                    break
+            if flag is False:
+                print(f"New class: {pdf_file}")
 
+    return keyword_counts
 
 folder_path = './'
 duplicate_files = find_duplicate_files(folder_path)
 # Dictionary to hold filename and amount
 invoice_amounts = {}
+
+# 要统计的多个关键词
+keywords = ["汽油", "餐饮", "运输服务", "经营租赁", "柴油", "通信设备"]
 
 if duplicate_files:
     print("发现重复的发票文件:")
@@ -60,6 +79,7 @@ else:
     total = 0
     for item in pdf_files:
         amount = extract_amount_from_invoice(item)
+                
         if amount:
             invoice_amounts[item] = float(amount)
             # print(f"{item}: {amount}\n")
@@ -67,10 +87,16 @@ else:
         else:
             print("未找到金额\n")
     # Sort dictionary by amount in descending order
-    sorted_invoices = sorted(invoice_amounts.items(), key=lambda item: item[1], reverse=True)
-    
+    sorted_invoices = sorted(invoice_amounts.items(), key=lambda item: item[1], reverse=True)    
     for invoice, amount in sorted_invoices:
         print(f"{invoice}: {amount}")
+        
+    print("分类明细如下：")
+    class_result = collect_invoice_class(pdf_files, keywords)
+    for key, value in class_result.items():
+        print(f"{key}类: {value}")
+    print("分类合计:", sum(class_result.values()))
+        
     print(f"当前发票数量为：{len(pdf_files)}，总金额为： {total}元")
     
 input("Press Enter to exit...")
