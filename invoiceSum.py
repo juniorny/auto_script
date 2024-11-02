@@ -50,11 +50,35 @@ def collect_invoice_class(pdf_files, keywords):
                 if keyword in text:
                     keyword_counts[keyword] += 1
                     flag = True
+                    # if keyword == '餐饮' or keyword == '通信设备':
+                        # print(pdf_file)
                     break
             if flag is False:
                 print(f"New class: {pdf_file}")
 
     return keyword_counts
+
+def check_tin_from_pdf(pdf_files):
+    tin_numbers = []
+    flag = True
+    count = 1
+
+    for pdf_file in pdf_files:
+        with pdfplumber.open(pdf_file) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text()
+                # 使用正则表达式查找纳税人识别号
+                tin_numbers = re.findall(r'\b\d{15,}[a-zA-Z]*\b', text)
+                if len(tin_numbers) == 0:
+                    print(f"【{count}】未找到纳税人识别号：{pdf_file}") 
+                    flag = False 
+                    count += 1
+                elif '52440000773065316P' not in tin_numbers:   # 广工商纳税人识别号
+                    print(f"【{count}】纳税人识别号错误{pdf_file}： {tin_numbers}")
+                    flag = False 
+                    count += 1
+
+    return flag
 
 # 发票路径
 folder_path = './'
@@ -63,7 +87,7 @@ folder_path = './'
 invoice_amounts = {}
 
 # 要统计的多个关键词
-keywords = ["汽油", "柴油", "餐饮", "运输服务", "通信设备"]
+keywords = ["汽油", "柴油", "运输服务", "餐饮", "通信设备"]
 
 
 def main():
@@ -74,13 +98,21 @@ def main():
         for files in duplicate_files:
             print("重复文件组:")
             for file in files:
-                print(file)
+                print(file)               
     else:
-        print("没有发现重复的发票文件\n")
+        print("没有发现重复的发票文件！\n")
         
         # PDF文件列表
         pdf_files = glob.glob("./*.pdf")
         # print(pdf_files, len(pdf_files))
+        
+        # 提取纳税人识别号
+        tin_flag = check_tin_from_pdf(pdf_files)
+        if tin_flag is False:
+            return -1
+        else:
+            print("纳税人识别号正确！\n")
+             
         for item in pdf_files:
             # 计算金额
             amount = extract_amount_from_invoice(item)                  
@@ -95,7 +127,7 @@ def main():
             print(f"{invoice}: {amount}")
             
         # 计算明细
-        print("分类明细如下：")
+        print("\n分类明细如下：")
         class_result = collect_invoice_class(pdf_files, keywords)
         for key, value in class_result.items():
             print(f"{key}类: {value}")
