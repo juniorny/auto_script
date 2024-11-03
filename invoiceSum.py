@@ -117,7 +117,17 @@ def main():
             # 计算金额
             amount = extract_amount_from_invoice(item)                  
             if amount:
-                invoice_amounts[item] = float(amount)
+                # 抽取小额
+                if float(amount) < 155:
+                    current_directory = os.getcwd()
+                    destination_folder = os.path.join(current_directory, '抽取小额')  # 目标文件夹
+                    source_path = os.path.join(current_directory, item)
+                    destination_path = os.path.join(destination_folder, item)
+                    os.rename(source_path, destination_path)
+                    print(f"已移动文件: {item}")
+                else:
+                    invoice_amounts[item] = float(amount)
+
                 # print(f"{item}: {amount}\n")
             else:
                 print(f"未找到金额: {item}\n")
@@ -127,6 +137,8 @@ def main():
             print(f"{invoice}: {amount}")
             
         # 计算明细
+        # 刷新PDF文件列表
+        pdf_files = glob.glob("./*.pdf")
         print("\n分类明细如下：")
         class_result = collect_invoice_class(pdf_files, keywords)
         for key, value in class_result.items():
