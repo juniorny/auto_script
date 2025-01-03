@@ -18,11 +18,12 @@ def find_duplicate_files(folder_path):
     for root, dirs, files in os.walk(folder_path):
         for file in files:
             file_path = os.path.join(root, file)
-            file_hash = get_file_hash(file_path)
-            if file_hash in file_hash_dict:
-                file_hash_dict[file_hash].append(file_path)
-            else:
-                file_hash_dict[file_hash] = [file_path]
+            if file_path.endswith(".pdf"):
+                file_hash = get_file_hash(file_path)
+                if file_hash in file_hash_dict:
+                    file_hash_dict[file_hash].append(file_path)
+                else:
+                    file_hash_dict[file_hash] = [file_path]
     
     duplicates = [file_list for file_list in file_hash_dict.values() if len(file_list) > 1]
     return duplicates
@@ -49,6 +50,7 @@ def collect_invoice_class(pdf_files, keywords):
             for keyword in keywords:
                 if keyword in text:
                     keyword_counts[keyword] += 1
+                    print(f'{keyword} - {pdf_file}')
                     flag = True
                     # if keyword == '餐饮' or keyword == '通信设备':
                         # print(pdf_file)
@@ -118,8 +120,12 @@ def main():
             amount = extract_amount_from_invoice(item)                  
             if amount:
                 # 抽取小额
-                if float(amount) < 155:
+                if float(amount) < 0:
                     current_directory = os.getcwd()
+                    # 判断文件夹是否存在 
+                    if not os.path.exists('抽取小额'): 
+                        # 如果不存在，则创建文件夹 
+                        os.makedirs('抽取小额')
                     destination_folder = os.path.join(current_directory, '抽取小额')  # 目标文件夹
                     source_path = os.path.join(current_directory, item)
                     destination_path = os.path.join(destination_folder, item)
