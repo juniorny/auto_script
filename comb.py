@@ -10,8 +10,14 @@ def find_combinations(items, target, partial=[], results=set()):
     if total > target:
         return  # 如果总和已经超过目标，则终止
 
-    for item in items:
-        find_combinations(items, target, partial + [item], results)
+    # 元素只能使用一次
+    for i, item in enumerate(items):
+        remaining = items[:i] + items[i+1:] # 移除已经使用过的元素
+        find_combinations(remaining, target, partial + [item], results)
+        
+    # 元素可以多次使用
+    # for item in items:
+        # find_combinations(items, target, partial + [item], results)
 
 # 示例商品价格列表
 prices = [71.88, 64.9, 42.36, 34.8, 84, 93.6, 95.88, 88.2, 63.96, 90, 34.22, 21.6, 43.08, 65]
